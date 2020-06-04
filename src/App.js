@@ -13,6 +13,7 @@ const { Text } = Typography;
 const { Meta } = Card;
 
 export default class App extends Component {
+
   constructor(props) {
     super(props);
 
@@ -52,6 +53,20 @@ export default class App extends Component {
         }))
       }
     })
+
+    // keep new message on bottom
+    this.scrollToBottom();
+  }
+
+  componentDidUpdate() {
+    this.scrollToBottom();
+  }
+
+  scrollToBottom = () => {
+    if(this.messagesEnd)
+    {
+      this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+    }
   }
 
   render() {
@@ -61,22 +76,23 @@ export default class App extends Component {
           this.state.isLoggedIn ? 
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 50 }}>
-            {this.state.messages.map(message => 
-              <Card 
-                key={message.msg.text} 
-                style={{ width: 300, margin: '16px 4px 0 4px', alignSelf: this.state.userName === message.user ? 'flex-end' : 'flex-start' }} 
-                loading={false}
-                cover={message.msg.imgUrl != '' ? <img src={message.msg.imgUrl} /> : <div />}
-                >
-                <Meta
-                  avatar={
-                    <Avatar style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>{message.user[0].toUpperCase()}</Avatar>
-                  }
-                  title={message.user}
-                  description={message.msg.text}
-                />
-              </Card>
-            )}
+              {this.state.messages.map(message => 
+                <Card 
+                  key={message.msg.text} 
+                  style={{ width: 300, margin: '16px 4px 0 4px', alignSelf: this.state.userName === message.user ? 'flex-end' : 'flex-start' }} 
+                  loading={false}
+                  cover={message.msg.imgUrl != '' ? <img src={message.msg.imgUrl} /> : <div />}
+                  >
+                  <Meta
+                    avatar={
+                      <Avatar style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>{message.user[0].toUpperCase()}</Avatar>
+                    }
+                    title={message.user}
+                    description={message.msg.text}
+                  />
+                </Card>
+              )}
+              <div style={{ float:"left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }} />
             </div>
             <div className='bottom'>
               <TextField onSearch={this.onButtonClicked}/>
