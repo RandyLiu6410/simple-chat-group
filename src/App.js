@@ -1,36 +1,45 @@
 import React, {Component} from 'react';
 import { w3cwebsocket as W3CWebSocket} from 'websocket';
+import io from 'socket.io-client';
 import { Card, Avatar, Input, Typography} from 'antd';
 import 'antd/dist/antd.css';
+import TextField from './Component/TextField';
+import pic from './asset/img/IMG_8872.jpg';
 
-const client = new W3CWebSocket('wss://chat-group-ws-server.herokuapp.com');
+const client = io('http://chat-group-ws-server.herokuapp.com');
 
 const { Search } = Input;
 const { Text } = Typography;
 const { Meta } = Card;
 
 export default class App extends Component {
-  state = {
-    userName: '',
-    isLoggedIn: false,
-    messages: []
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      userName: '',
+      isLoggedIn: false,
+      messages: []
+    }
+
+    this.onButtonClicked = this.onButtonClicked.bind(this);
   }
 
   onButtonClicked = (value) => {
-    client.send(JSON.stringify({
+    client.emit('getMessage', JSON.stringify({
       type: "message",
       msg: value,
       user: this.state.userName
-    }));
-    this.setState({ searchVal: '' })
+    }))
   }
 
   componentWillMount() {
-    client.onopen = () => {
+    client.open = () => {
       console.log('WebSocket Client Connected');
     };
-    client.onmessage = (message) => {
-      const dataFromServer = JSON.parse(message.data)
+
+    client.on('getMessage', message => {
+      const dataFromServer = JSON.parse(message)
       console.log(`got reply! `, dataFromServer);
       if(dataFromServer.type === 'message')
       {
@@ -42,7 +51,7 @@ export default class App extends Component {
           }]
         }))
       }
-    };
+    })
   }
 
   render() {
@@ -53,26 +62,24 @@ export default class App extends Component {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 50 }}>
             {this.state.messages.map(message => 
-              <Card key={message.msg} style={{ width: 300, margin: '16px 4px 0 4px', alignSelf: this.state.userName === message.user ? 'flex-end' : 'flex-start' }} loading={false}>
+              <Card 
+                key={message.msg.text} 
+                style={{ width: 300, margin: '16px 4px 0 4px', alignSelf: this.state.userName === message.user ? 'flex-end' : 'flex-start' }} 
+                loading={false}
+                cover={message.msg.imgUrl != '' ? <img src={message.msg.imgUrl} /> : <div />}
+                >
                 <Meta
                   avatar={
                     <Avatar style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>{message.user[0].toUpperCase()}</Avatar>
                   }
                   title={message.user}
-                  description={message.msg}
+                  description={message.msg.text}
                 />
-              </Card> 
+              </Card>
             )}
             </div>
             <div className='bottom'>
-              <Search
-                placeholder="Type something..."
-                enterButton="Send"
-                value={this.state.searchVal}
-                size="large"
-                onChange={(e) => this.setState({searchVal: e.target.value})}
-                onSearch={(value) => this.onButtonClicked(value)}
-              />
+              <TextField onSearch={this.onButtonClicked}/>
             </div>
           </div>
           :
